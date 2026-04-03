@@ -8,9 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.shopwave.dto.ProductDTO;
-import com.shopwave.service.ProductService;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -19,6 +16,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.shopwave.dto.ProductDTO;
+import com.shopwave.service.ProductService;
 
 @WebMvcTest(controllers = ProductController.class)
 public class ProductControllerTest {

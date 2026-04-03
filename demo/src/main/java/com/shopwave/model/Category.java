@@ -1,3 +1,4 @@
+//melat, ATE/7037/14
 package com.shopwave.model;
 
 import jakarta.persistence.Column;

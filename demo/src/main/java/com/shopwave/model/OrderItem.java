@@ -1,3 +1,4 @@
+//melat, ATE/7037/14
 package com.shopwave.model;
 
 import java.math.BigDecimal;
@@ -18,6 +19,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+
 
 @Entity
 @Table(name = "order_items")

@@ -56,9 +56,7 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OrderItem> items = new ArrayList<>();
 
-    /**
-     * Convenience helper to add an item to the order.
-     */
+
     public void addItem(Product product, int quantity) {
         if (product == null) {
             throw new IllegalArgumentException("product must not be null");

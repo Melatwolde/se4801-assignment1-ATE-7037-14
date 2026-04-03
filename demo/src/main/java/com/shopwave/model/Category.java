@@ -12,9 +12,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Product category.
- */
 @Entity
 @Table(name = "categories")
 @Data

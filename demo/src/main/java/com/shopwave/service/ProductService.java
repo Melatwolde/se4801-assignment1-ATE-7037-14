@@ -37,7 +37,8 @@ public class ProductService {
     public ProductDTO createProduct(CreateProductRequest request) {
         Category category = null;
         if (request.getCategoryId() != null) {
-            category = categoryRepository.findById(request.getCategoryId()).orElse(null);
+            Long cid = request.getCategoryId();
+            category = categoryRepository.findById(cid).orElseThrow(() -> new IllegalArgumentException("Category not found: " + cid));
         }
         Product p = ProductMapper.fromCreateRequest(request, category);
         Product saved = productRepository.save(p);

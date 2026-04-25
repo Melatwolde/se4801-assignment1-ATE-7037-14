@@ -34,7 +34,7 @@ public class ProductServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        productService = new ProductService(productRepository, categoryRepository);
+        productService = new ProductServiceImpl(productRepository, categoryRepository);
     }
 
     @Test

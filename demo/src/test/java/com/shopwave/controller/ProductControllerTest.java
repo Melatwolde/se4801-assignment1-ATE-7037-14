@@ -1,55 +1,141 @@
 package com.shopwave.controller;
 
-import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
-import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.shopwave.dto.ProductDTO;
-import com.shopwave.service.ProductService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopwave.dto.CreateProductRequest;
+import com.shopwave.model.Product;
+import com.shopwave.repository.ProductRepository;
 
-@WebMvcTest(controllers = ProductController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@Transactional
 public class ProductControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private ProductService productService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    
+    @Autowired
+    private ProductRepository productRepository;
+
+    private Long savedId;
+
+    @BeforeEach
+    void setUp() {
+        Product product = Product.builder()
+                .name("Test Product")
+                .description("Test Description")
+                .price(BigDecimal.valueOf(99.99))
+                .stock(10)
+                .build();
+        savedId = productRepository.save(product).getId();
+    }
 
     @Test
-    void getAllProducts_returnsPage() throws Exception {
-        ProductDTO p = ProductDTO.builder().id(1L).name("X").price(BigDecimal.TEN).stock(5).build();
-        Pageable pageable = PageRequest.of(0, 10);
-        when(productService.getAllProducts(pageable)).thenReturn(new PageImpl<>(List.of(p), pageable, 1));
-
-        mockMvc.perform(get("/api/products").param("page", "0").param("size", "10"))
+    void getAllProducts_returns200() throws Exception {
+        mockMvc.perform(get("/api/v1/products"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].id").value(1));
+                .andExpect(jsonPath("$.content").isArray());
+    }
+
+    @Test
+    void getProductById_returns200() throws Exception {
+        mockMvc.perform(get("/api/v1/products/{id}", savedId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(savedId))
+                .andExpect(jsonPath("$.name").value("Test Product"));
+    }
+
+    @Test
+    void createProduct_returns201() throws Exception {
+        CreateProductRequest request = CreateProductRequest.builder()
+                .name("New Product")
+                .description("New Description")
+                .price(BigDecimal.valueOf(49.99))
+                .stock(5)
+                .build();
+
+        mockMvc.perform(post("/api/v1/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("New Product"));
+    }
+
+    @Test
+    void updateProduct_returns200() throws Exception {
+        CreateProductRequest request = CreateProductRequest.builder()
+                .name("Updated Product")
+                .description("Updated Description")
+                .price(BigDecimal.valueOf(199.99))
+                .stock(20)
+                .build();
+
+        mockMvc.perform(put("/api/v1/products/{id}", savedId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Updated Product"))
+                .andExpect(jsonPath("$.stock").value(20));
+    }
+
+    @Test
+    void deleteProduct_returns204() throws Exception {
+        mockMvc.perform(delete("/api/v1/products/{id}", savedId))
+                .andExpect(status().isNoContent());
     }
 
     @Test
     void getProductById_notFound_returns404() throws Exception {
-        when(productService.getProductById(999L)).thenThrow(new com.shopwave.exception.ProductNotFoundException(999L));
+        mockMvc.perform(get("/api/v1/products/999999"))
+                .andExpect(status().isNotFound());
+    }
 
-        mockMvc.perform(get("/api/products/999")).andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"))
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.path").value("/api/products/999"));
+    @Test
+    void createProduct_invalidRequest_returns400() throws Exception {
+        CreateProductRequest request = CreateProductRequest.builder()
+                .name("")
+                .price(BigDecimal.valueOf(-1))
+                .stock(-1)
+                .build();
+
+        mockMvc.perform(post("/api/v1/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateProduct_notFound_returns404() throws Exception {
+        CreateProductRequest request = CreateProductRequest.builder()
+                .name("Updated Product")
+                .description("Updated Description")
+                .price(BigDecimal.valueOf(199.99))
+                .stock(20)
+                .build();
+
+        mockMvc.perform(put("/api/v1/products/999999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound());
     }
 }
